@@ -171,14 +171,32 @@ class Game {
                     const random = Math.random();
                     let enemy;
                     if (this.currentLevelIndex === 0) {
-                        if (random < 0.6) {
-                            enemy = new Drone(this);
-                        } else if (random < 0.8) {
-                            enemy = new Weaver(this);
-                        } else {
-                            enemy = new Shooter(this);
+                        // Gradually increase difficulty in Level 1
+                        const levelProgress = (currentTime - this.levelStartTime) / this.levelDuration;
+                        if (levelProgress < 0.3) { // First 30% of the level
+                            if (random < 0.8) {
+                                enemy = new Drone(this);
+                            } else {
+                                enemy = new Weaver(this);
+                            }
+                        } else if (levelProgress < 0.6) { // Next 30%
+                            if (random < 0.5) {
+                                enemy = new Drone(this);
+                            } else if (random < 0.8) {
+                                enemy = new Weaver(this);
+                            } else {
+                                enemy = new Shooter(this);
+                            }
+                        } else { // Final 40%
+                            if (random < 0.4) {
+                                enemy = new Drone(this);
+                            } else if (random < 0.7) {
+                                enemy = new Weaver(this);
+                            } else {
+                                enemy = new Shooter(this);
+                            }
                         }
-                    } else {
+                    } else { // For other levels, use the original logic
                         if (random < 0.4) {
                             enemy = new Drone(this);
                         } else if (random < 0.7) {
@@ -187,8 +205,10 @@ class Game {
                             enemy = new Shooter(this);
                         }
                     }
-                    this.allSprites.push(enemy);
-                    this.enemies.push(enemy);
+                    if (enemy) {
+                        this.allSprites.push(enemy);
+                        this.enemies.push(enemy);
+                    }
                 }
             }
 
@@ -309,7 +329,7 @@ class Game {
             this.allSprites.forEach(sprite => sprite.draw(this.ctx));
 
             this.drawText(`SCORE: ${this.score.toString().padStart(6, '0')}`, "36px sans-serif", WHITE, 10, 10);
-            this.drawText(`LIVES: ${'♥'.repeat(this.lives)}`, "36px sans-serif", RED, SCREEN_WIDTH - 150, 10);
+            this.drawText(`LIVES: ${'♥'.repeat(this.lives)}`, "36px sans-serif", RED, SCREEN_WIDTH - 200, 10);
             this.drawText(`LEVEL: ${this.currentLevelIndex + 1}`, "36px sans-serif", WHITE, 10, SCREEN_HEIGHT - 40);
 
             if (this.activePowerUpHudInfo) {
@@ -339,7 +359,7 @@ class Game {
         } else if (this.gameState === PAUSE) {
             this.allSprites.forEach(sprite => sprite.draw(this.ctx));
             this.drawText(`SCORE: ${this.score.toString().padStart(6, '0')}`, "36px sans-serif", WHITE, 10, 10);
-            this.drawText(`LIVES: ${'♥'.repeat(this.lives)}`, "36px sans-serif", RED, SCREEN_WIDTH - 150, 10);
+            this.drawText(`LIVES: ${'♥'.repeat(this.lives)}`, "36px sans-serif", RED, SCREEN_WIDTH - 200, 10);
             this.drawText(`LEVEL: ${this.currentLevelIndex + 1}`, "36px sans-serif", WHITE, 10, SCREEN_HEIGHT - 40);
             this.drawText("PAUSED", "72px sans-serif", WHITE, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, true);
             this.drawText("Press P to Resume", "36px sans-serif", WHITE, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 50, true);
@@ -400,6 +420,7 @@ class Player extends Sprite {
         this.powerUpEndTime = 0;
         this.originalFireCooldown = this.fireCooldown;
         this.alpha = 1;
+        this.scoreMultiplier = 1;
     }
 
     update() {
@@ -477,9 +498,21 @@ class Player extends Sprite {
         const currentTime = Date.now();
         if (currentTime - this.lastShotTime > this.fireCooldown) {
             this.lastShotTime = currentTime;
-            const bullet = new Bullet(this.x + this.width, this.y + this.height / 2, this.game);
-            this.game.allSprites.push(bullet);
-            this.game.playerBullets.push(bullet);
+            if (this.activePowerUpType === "spread_shot") {
+                const bullet1 = new Bullet(this.x + this.width, this.y + this.height / 2, this.game, 10, -2);
+                const bullet2 = new Bullet(this.x + this.width, this.y + this.height / 2, this.game, 10, 0);
+                const bullet3 = new Bullet(this.x + this.width, this.y + this.height / 2, this.game, 10, 2);
+                this.game.allSprites.push(bullet1, bullet2, bullet3);
+                this.game.playerBullets.push(bullet1, bullet2, bullet3);
+            } else if (this.activePowerUpType === "homing_missile") {
+                const missile = new HomingMissile(this.x + this.width, this.y + this.height / 2, this.game);
+                this.game.allSprites.push(missile);
+                this.game.playerBullets.push(missile);
+            } else {
+                const bullet = new Bullet(this.x + this.width, this.y + this.height / 2, this.game);
+                this.game.allSprites.push(bullet);
+                this.game.playerBullets.push(bullet);
+            }
         }
     }
 
@@ -498,6 +531,8 @@ class Player extends Sprite {
             this.fireCooldown = this.originalFireCooldown;
         } else if (this.activePowerUpType === "shield") {
             this.isInvincible = false;
+        } else if (this.activePowerUpType === "score_multiplier") {
+            this.scoreMultiplier = 1;
         }
         this.activePowerUpType = null;
         this.powerUpEndTime = 0;
@@ -521,6 +556,25 @@ class Player extends Sprite {
         this.activePowerUpType = "spread_shot";
         this.powerUpEndTime = Date.now() + 10000;
         this.game.activePowerUpHudInfo = { name: "Spread Shot", endTime: this.powerUpEndTime };
+    }
+
+    activateHomingMissile() {
+        if (this.activePowerUpType) {
+            this.deactivatePowerUp();
+        }
+        this.activePowerUpType = "homing_missile";
+        this.powerUpEndTime = Date.now() + 15000; // Lasts 15 seconds
+        this.game.activePowerUpHudInfo = { name: "Homing Missile", endTime: this.powerUpEndTime };
+    }
+
+    activateScoreMultiplier() {
+        if (this.activePowerUpType) {
+            this.deactivatePowerUp();
+        }
+        this.activePowerUpType = "score_multiplier";
+        this.powerUpEndTime = Date.now() + 10000; // Lasts 10 seconds
+        this.scoreMultiplier = 2;
+        this.game.activePowerUpHudInfo = { name: "2x Score", endTime: this.powerUpEndTime };
     }
 
     shoot() {
@@ -590,16 +644,20 @@ class Enemy extends Sprite {
         this.health -= damage;
         if (this.health <= 0) {
             this.kill();
-            this.game.score += 10;
-            if (Math.random() < 0.2) {
+            this.game.score += 10 * (this.game.player.scoreMultiplier || 1);
+            if (Math.random() < 0.25) { // Increased drop chance slightly
                 const random = Math.random();
                 let powerUpType;
-                if (random < 0.3) {
+                if (random < 0.25) {
                     powerUpType = "rapid_fire";
-                } else if (random < 0.6) {
+                } else if (random < 0.5) {
                     powerUpType = "shield";
-                } else if (random < 0.9) {
+                } else if (random < 0.7) {
                     powerUpType = "spread_shot";
+                } else if (random < 0.85) {
+                    powerUpType = "homing_missile";
+                } else if (random < 0.95) {
+                    powerUpType = "score_multiplier";
                 } else {
                     powerUpType = "extra_life";
                 }
@@ -880,6 +938,55 @@ class TheWarden extends Boss {
     }
 }
 
+class HomingMissile extends Bullet {
+    constructor(x, y, game) {
+        super(x, y, game);
+        this.target = null;
+        this.turnSpeed = 0.1;
+        this.speed = 5;
+        this.width = 20;
+        this.height = 8;
+    }
+
+    update() {
+        if (!this.target || !this.game.enemies.includes(this.target)) {
+            this.findNewTarget();
+        }
+
+        if (this.target) {
+            const targetAngle = Math.atan2(this.target.y - this.y, this.target.x - this.x);
+            this.x += Math.cos(targetAngle) * this.speed;
+            this.y += Math.sin(targetAngle) * this.speed;
+        } else {
+            this.x += this.speed; // Move straight if no target
+        }
+
+        if (this.x > SCREEN_WIDTH) {
+            this.kill();
+        }
+    }
+
+    findNewTarget() {
+        let closestEnemy = null;
+        let minDistance = Infinity;
+
+        this.game.enemies.forEach(enemy => {
+            const distance = Math.hypot(this.x - enemy.x, this.y - enemy.y);
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestEnemy = enemy;
+            }
+        });
+
+        this.target = closestEnemy;
+    }
+
+    draw(ctx) {
+        ctx.fillStyle = "#FF69B4"; // Hot Pink
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+    }
+}
+
 class PowerUp extends Sprite {
     constructor(game, x, y, type) {
         super(game);
@@ -902,33 +1009,42 @@ class PowerUp extends Sprite {
 
     draw(ctx) {
         ctx.save();
+        let letter = '';
+        let color = '';
+        let letterColor = BLACK;
+
         if (this.type === "rapid_fire") {
-            ctx.fillStyle = "#FFD700"; // Gold
-            ctx.beginPath();
-            ctx.moveTo(this.x + 12.5, this.y);
-            ctx.lineTo(this.x + 25, this.y + 25);
-            ctx.lineTo(this.x, this.y + 25);
-            ctx.closePath();
-            ctx.fill();
+            letter = 'R';
+            color = "#FFD700"; // Gold
         } else if (this.type === "shield") {
-            ctx.fillStyle = "#00FFFF"; // Cyan
-            ctx.beginPath();
-            ctx.arc(this.x + 12.5, this.y + 12.5, 12.5, 0, Math.PI * 2);
-            ctx.fill();
+            letter = 'S';
+            color = "#00FFFF"; // Cyan
         } else if (this.type === "spread_shot") {
-            ctx.fillStyle = "#00FF00"; // Green
-            ctx.beginPath();
-            ctx.moveTo(this.x, this.y);
-            ctx.lineTo(this.x + 25, this.y + 12.5);
-            ctx.lineTo(this.x, this.y + 25);
-            ctx.closePath();
-            ctx.fill();
+            letter = 'W';
+            color = "#00FF00"; // Green
+        } else if (this.type === "homing_missile") {
+            letter = 'H';
+            color = "#FF69B4"; // Hot Pink
+        } else if (this.type === "score_multiplier") {
+            letter = '2x';
+            color = "#9370DB"; // Medium Purple
         } else if (this.type === "extra_life") {
-            ctx.fillStyle = "#FF0000"; // Red
-            ctx.font = "20px sans-serif";
+            letter = '1UP';
+            color = RED;
+            letterColor = WHITE;
+        }
+
+        if (letter) {
+            // Draw background square
+            ctx.fillStyle = color;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+            
+            // Draw letter
+            ctx.fillStyle = letterColor;
+            ctx.font = "bold 18px sans-serif";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.fillText("1UP", this.x + this.width / 2, this.y + this.height / 2);
+            ctx.fillText(letter, this.x + this.width / 2, this.y + this.height / 2 + 1);
         }
         ctx.restore();
     }
@@ -940,6 +1056,10 @@ class PowerUp extends Sprite {
             this.game.player.activateShield();
         } else if (this.type === "spread_shot") {
             this.game.player.activateSpreadShot();
+        } else if (this.type === "homing_missile") {
+            this.game.player.activateHomingMissile();
+        } else if (this.type === "score_multiplier") {
+            this.game.player.activateScoreMultiplier();
         } else if (this.type === "extra_life") {
             this.game.lives++;
         }

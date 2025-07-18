@@ -1,11 +1,9 @@
 # Flappy Impact
 
-Flappy Impact is a dynamic side-scrolling shooter game inspired by Flappy Bird, built with Pygame. Navigate your ship through waves of enemies, collect power-ups, and confront challenging bosses!
+Flappy Impact is a dynamic side-scrolling shooter game inspired by Flappy Bird and Space Impact by Nokia, built with HTML5 Canvas and JavaScript. Navigate your ship through waves of enemies, collect power-ups, and confront challenging bosses!
 
 ## Table of Contents
 
-- [Dependencies](#dependencies)
-- [Setup Instructions](#setup-instructions)
 - [How to Play](#how-to-play)
   - [Controls](#controls)
   - [Objective](#objective)
@@ -18,29 +16,9 @@ Flappy Impact is a dynamic side-scrolling shooter game inspired by Flappy Bird, 
     - [Lives](#lives)
     - [Game States](#game-states)
 
-## Dependencies
-
-- **Python 3.x**
-- **Pygame**
-
-## Setup Instructions
-
-1.  **Install Python:**
-    If you don't have Python installed, download and install it from [python.org](https://www.python.org/downloads/). Make sure to check the box that says "Add Python to PATH" during installation.
-
-2.  **Install Pygame:**
-    Open your terminal or command prompt and run the following command:
-    ```bash
-    pip install pygame
-    ```
-
-3.  **Run the Game:**
-    Navigate to the directory where you've saved `flappy_impact.py` and run:
-    ```bash
-    python flappy_impact.py
-    ```
-
 ## How to Play
+
+To play the game, simply open the `index.html` file in a modern web browser (like Chrome, Firefox, or Edge).
 
 ### Controls
 
@@ -59,7 +37,7 @@ The main objective of Flappy Impact is to survive as long as possible by navigat
 
 #### Player
 
--   You control a yellow, triangular ship.
+-   You control a ship that is a combination of yellow, orange and blue colors.
 -   The ship is always moving forward (screen scrolls left).
 -   Pressing **Spacebar** gives the ship an upward boost. Gravity will constantly pull it downwards.
 -   Touching the top or bottom edges of the screen results in losing a life.
@@ -68,7 +46,9 @@ The main objective of Flappy Impact is to survive as long as possible by navigat
 #### Enemies
 
 -   Various types of enemies will appear from the right side of the screen.
--   **Drones (Red Squares):** Basic enemies that move horizontally.
+-   **Drones (Silver Squares):** Basic enemies that move horizontally.
+-   **Weavers (Purple Squares):** Enemies that move in a sine wave pattern.
+-   **Shooters (Orange Rectangles):** Enemies that shoot bullets at the player.
 -   Shooting enemies earns you points.
 -   Enemies may drop power-ups when destroyed.
 
@@ -82,7 +62,12 @@ The main objective of Flappy Impact is to survive as long as possible by navigat
 #### Power-ups
 
 -   Destroyed enemies have a chance to drop power-ups.
--   **Rapid Fire (Blue 'R'):** Temporarily increases your ship's firing rate.
+-   **Rapid Fire (Gold Square with 'R'):** Temporarily increases your ship's firing rate.
+-   **Shield (Cyan Square with 'S'):** Makes the player invincible for a short period.
+-   **Spread Shot (Green Square with 'W'):** Allows the player to shoot three bullets at once.
+-   **Homing Missile (Pink Square with 'H'):** Fires missiles that track and destroy enemies.
+-   **Score Multiplier (Purple Square with '2x'):** Doubles the points earned from destroying enemies.
+-   **Extra Life (Red Square with '1UP'):** Gives the player an extra life.
 -   Power-ups are collected by flying into them and last for a limited time. The active power-up and its remaining duration are displayed at the bottom of the screen.
 
 #### Scoring
@@ -90,7 +75,6 @@ The main objective of Flappy Impact is to survive as long as possible by navigat
 -   You earn points by:
     -   Destroying enemies.
     -   Defeating bosses.
-    -   A small number of points may be awarded for crashing into enemies (though this also costs a life!).
 
 #### Lives
 
@@ -112,3 +96,4 @@ The main objective of Flappy Impact is to survive as long as possible by navigat
 -   **Level Complete:** Shown after defeating a boss, before transitioning to the next level.
 
 Good luck, pilot!
+
