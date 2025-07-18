@@ -348,6 +348,18 @@ class Sprite {
     draw(ctx) {}
     kill() {
         this.game.allSprites = this.game.allSprites.filter(sprite => sprite !== this);
+        if (this instanceof Enemy) {
+            this.game.enemies = this.game.enemies.filter(enemy => enemy !== this);
+        }
+        if (this instanceof Bullet) {
+            this.game.playerBullets = this.game.playerBullets.filter(bullet => bullet !== this);
+        }
+        if (this instanceof EnemyBullet) {
+            this.game.enemyBullets = this.game.enemyBullets.filter(bullet => bullet !== this);
+        }
+        if (this instanceof PowerUp) {
+            this.game.powerUps = this.game.powerUps.filter(powerUp => powerUp !== this);
+        }
     }
 }
 
