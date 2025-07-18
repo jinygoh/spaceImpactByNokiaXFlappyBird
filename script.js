@@ -82,7 +82,7 @@ class Game {
 
         if (this.currentLevelIndex === 0) {
             this.levelDuration = 60000;
-            this.enemySpawnInterval = 2000;
+            this.enemySpawnInterval = 3000;
         } else if (this.currentLevelIndex === 1) {
             this.levelDuration = 75000;
         } else if (this.currentLevelIndex === 2) {
