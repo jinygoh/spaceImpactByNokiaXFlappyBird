@@ -168,11 +168,27 @@ class Game {
             if (this.levelEnemyPhaseActive && !this.bossActive) {
                 if (currentTime - this.lastEnemySpawnTime > this.enemySpawnInterval) {
                     this.lastEnemySpawnTime = currentTime;
+                    const random = Math.random();
+                    let enemy;
                     if (this.currentLevelIndex === 0) {
-                        const drone = new Drone(this);
-                        this.allSprites.push(drone);
-                        this.enemies.push(drone);
+                        if (random < 0.6) {
+                            enemy = new Drone(this);
+                        } else if (random < 0.8) {
+                            enemy = new Weaver(this);
+                        } else {
+                            enemy = new Shooter(this);
+                        }
+                    } else {
+                        if (random < 0.4) {
+                            enemy = new Drone(this);
+                        } else if (random < 0.7) {
+                            enemy = new Weaver(this);
+                        } else {
+                            enemy = new Shooter(this);
+                        }
                     }
+                    this.allSprites.push(enemy);
+                    this.enemies.push(enemy);
                 }
             }
 
@@ -424,13 +440,24 @@ class Player extends Sprite {
     draw(ctx) {
         ctx.save();
         ctx.globalAlpha = this.alpha;
-        ctx.fillStyle = YELLOW;
+
+        // Body
+        ctx.fillStyle = "#FFC300"; // Yellow
+        ctx.fillRect(this.x + 5, this.y + 5, 20, 10);
+
+        // Cockpit
+        ctx.fillStyle = "#00BFFF"; // Deep Sky Blue
+        ctx.fillRect(this.x + 20, this.y + 8, 5, 4);
+
+        // Wing
+        ctx.fillStyle = "#FF5733"; // Orange Red
         ctx.beginPath();
-        ctx.moveTo(this.x, this.y);
-        ctx.lineTo(this.x + this.width, this.y + this.height / 2);
-        ctx.lineTo(this.x, this.y + this.height);
+        ctx.moveTo(this.x, this.y + 10);
+        ctx.lineTo(this.x + 10, this.y);
+        ctx.lineTo(this.x + 10, this.y + 20);
         ctx.closePath();
         ctx.fill();
+
         ctx.restore();
 
         if (this.activePowerUpType === "shield" || (this.isInvincible && this.activePowerUpType !== "shield")) {
@@ -487,6 +514,33 @@ class Player extends Sprite {
         this.game.activePowerUpHudInfo = { name: "Shield", endTime: this.powerUpEndTime };
     }
 
+    activateSpreadShot() {
+        if (this.activePowerUpType) {
+            this.deactivatePowerUp();
+        }
+        this.activePowerUpType = "spread_shot";
+        this.powerUpEndTime = Date.now() + 10000;
+        this.game.activePowerUpHudInfo = { name: "Spread Shot", endTime: this.powerUpEndTime };
+    }
+
+    shoot() {
+        const currentTime = Date.now();
+        if (currentTime - this.lastShotTime > this.fireCooldown) {
+            this.lastShotTime = currentTime;
+            if (this.activePowerUpType === "spread_shot") {
+                const bullet1 = new Bullet(this.x + this.width, this.y + this.height / 2, this.game, 10, -2);
+                const bullet2 = new Bullet(this.x + this.width, this.y + this.height / 2, this.game, 10, 0);
+                const bullet3 = new Bullet(this.x + this.width, this.y + this.height / 2, this.game, 10, 2);
+                this.game.allSprites.push(bullet1, bullet2, bullet3);
+                this.game.playerBullets.push(bullet1, bullet2, bullet3);
+            } else {
+                const bullet = new Bullet(this.x + this.width, this.y + this.height / 2, this.game);
+                this.game.allSprites.push(bullet);
+                this.game.playerBullets.push(bullet);
+            }
+        }
+    }
+
     loseLife() {
         if (!this.isInvincible) {
             this.game.lives--;
@@ -537,8 +591,18 @@ class Enemy extends Sprite {
         if (this.health <= 0) {
             this.kill();
             this.game.score += 10;
-            if (Math.random() < 0.15) {
-                const powerUpType = Math.random() < 0.5 ? "rapid_fire" : "shield";
+            if (Math.random() < 0.2) {
+                const random = Math.random();
+                let powerUpType;
+                if (random < 0.3) {
+                    powerUpType = "rapid_fire";
+                } else if (random < 0.6) {
+                    powerUpType = "shield";
+                } else if (random < 0.9) {
+                    powerUpType = "spread_shot";
+                } else {
+                    powerUpType = "extra_life";
+                }
                 const powerUp = new PowerUp(this.game, this.x + this.width / 2, this.y + this.height / 2, powerUpType);
                 this.game.allSprites.push(powerUp);
                 this.game.powerUps.push(powerUp);
@@ -566,7 +630,73 @@ class Drone extends Enemy {
     }
 
     draw(ctx) {
+        // Body
+        ctx.fillStyle = "#C0C0C0"; // Silver
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+
+        // Propeller
+        ctx.fillStyle = "#808080"; // Grey
+        ctx.fillRect(this.x + 10, this.y - 5, 10, 5);
+        ctx.fillRect(this.x + 10, this.y + 30, 10, 5);
+
+        // Eye
         ctx.fillStyle = RED;
+        ctx.fillRect(this.x + 20, this.y + 10, 5, 5);
+    }
+}
+
+class Weaver extends Enemy {
+    constructor(game) {
+        super(game);
+        this.width = 30;
+        this.height = 30;
+        this.x = SCREEN_WIDTH;
+        this.y = Math.random() * (SCREEN_HEIGHT - 100) + 50;
+        this.speed = Math.random() * 2 + 2;
+        this.amplitude = Math.random() * 50 + 20;
+        this.frequency = Math.random() * 0.05 + 0.02;
+        this.angle = 0;
+        this.health = 2;
+    }
+
+    update() {
+        super.update();
+        this.angle += this.frequency;
+        this.y += Math.sin(this.angle) * this.amplitude * 0.1;
+    }
+
+    draw(ctx) {
+        ctx.fillStyle = PURPLE;
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+    }
+}
+
+class Shooter extends Enemy {
+    constructor(game) {
+        super(game);
+        this.width = 40;
+        this.height = 20;
+        this.x = SCREEN_WIDTH;
+        this.y = Math.random() * (SCREEN_HEIGHT - 100) + 50;
+        this.speed = Math.random() * 1 + 1;
+        this.health = 3;
+        this.lastShotTime = 0;
+        this.fireCooldown = 2000;
+    }
+
+    update() {
+        super.update();
+        const currentTime = Date.now();
+        if (currentTime - this.lastShotTime > this.fireCooldown) {
+            this.lastShotTime = currentTime;
+            const bullet = new EnemyBullet(this.x, this.y + this.height / 2, this.game, -5, 0, 10, 10, ORANGE);
+            this.game.allSprites.push(bullet);
+            this.game.enemyBullets.push(bullet);
+        }
+    }
+
+    draw(ctx) {
+        ctx.fillStyle = ORANGE;
         ctx.fillRect(this.x, this.y, this.width, this.height);
     }
 }
@@ -607,10 +737,11 @@ class EnemyBullet extends Sprite {
 class Star extends Sprite {
     constructor() {
         super(null);
-        this.size = Math.random() * 3 + 1;
+        this.size = Math.random() * 2 + 1;
         this.x = Math.random() * SCREEN_WIDTH;
         this.y = Math.random() * SCREEN_HEIGHT;
-        this.speed = Math.random() * 2 + 1;
+        this.speed = Math.random() * 0.5 + 0.2;
+        this.color = `rgba(255, 255, 255, ${Math.random()})`;
     }
 
     update() {
@@ -622,7 +753,7 @@ class Star extends Sprite {
     }
 
     draw(ctx) {
-        ctx.fillStyle = WHITE;
+        ctx.fillStyle = this.color;
         ctx.fillRect(this.x, this.y, this.size, this.size);
     }
 }
@@ -735,10 +866,17 @@ class TheWarden extends Boss {
     }
 
     draw(ctx) {
-        ctx.fillStyle = GREY;
+        // Main body
+        ctx.fillStyle = "#A9A9A9"; // Dark Gray
         ctx.fillRect(this.x, this.y, this.width, this.height);
-        ctx.fillStyle = BLACK;
-        ctx.fillRect(this.x + 50, this.y + 65, 30, 20);
+
+        // Cannon
+        ctx.fillStyle = "#696969"; // Dim Gray
+        ctx.fillRect(this.x - 20, this.y + 60, 20, 30);
+
+        // Eye
+        ctx.fillStyle = RED;
+        ctx.fillRect(this.x + 35, this.y + 20, 10, 10);
     }
 }
 
@@ -763,23 +901,36 @@ class PowerUp extends Sprite {
     }
 
     draw(ctx) {
+        ctx.save();
         if (this.type === "rapid_fire") {
-            ctx.fillStyle = BLUE;
-            ctx.fillRect(this.x, this.y, this.width, this.height);
-            ctx.fillStyle = WHITE;
-            ctx.font = "20px sans-serif";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText("R", this.x + this.width / 2, this.y + this.height / 2);
+            ctx.fillStyle = "#FFD700"; // Gold
+            ctx.beginPath();
+            ctx.moveTo(this.x + 12.5, this.y);
+            ctx.lineTo(this.x + 25, this.y + 25);
+            ctx.lineTo(this.x, this.y + 25);
+            ctx.closePath();
+            ctx.fill();
         } else if (this.type === "shield") {
-            ctx.fillStyle = CYAN;
-            ctx.fillRect(this.x, this.y, this.width, this.height);
-            ctx.fillStyle = WHITE;
+            ctx.fillStyle = "#00FFFF"; // Cyan
+            ctx.beginPath();
+            ctx.arc(this.x + 12.5, this.y + 12.5, 12.5, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (this.type === "spread_shot") {
+            ctx.fillStyle = "#00FF00"; // Green
+            ctx.beginPath();
+            ctx.moveTo(this.x, this.y);
+            ctx.lineTo(this.x + 25, this.y + 12.5);
+            ctx.lineTo(this.x, this.y + 25);
+            ctx.closePath();
+            ctx.fill();
+        } else if (this.type === "extra_life") {
+            ctx.fillStyle = "#FF0000"; // Red
             ctx.font = "20px sans-serif";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.fillText("S", this.x + this.width / 2, this.y + this.height / 2);
+            ctx.fillText("1UP", this.x + this.width / 2, this.y + this.height / 2);
         }
+        ctx.restore();
     }
 
     applyEffect() {
@@ -787,6 +938,10 @@ class PowerUp extends Sprite {
             this.game.player.activateRapidFire();
         } else if (this.type === "shield") {
             this.game.player.activateShield();
+        } else if (this.type === "spread_shot") {
+            this.game.player.activateSpreadShot();
+        } else if (this.type === "extra_life") {
+            this.game.lives++;
         }
         this.kill();
     }
