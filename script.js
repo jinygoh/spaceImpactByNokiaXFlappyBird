@@ -357,8 +357,8 @@ class Player extends Sprite {
         this.x = 50;
         this.y = SCREEN_HEIGHT / 2;
         this.velocityY = 0;
-        this.gravity = 0.5;
-        this.flapStrength = -10;
+        this.gravity = 0.3;
+        this.flapStrength = -8;
         this.fireCooldown = 300;
         this.lastShotTime = 0;
         this.lastHitTime = 0;
@@ -418,6 +418,14 @@ class Player extends Sprite {
         ctx.closePath();
         ctx.fill();
         ctx.restore();
+
+        if (this.activePowerUpType === "shield" || (this.isInvincible && this.activePowerUpType !== "shield")) {
+            ctx.strokeStyle = CYAN;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(this.x + this.width / 2, this.y + this.height / 2, this.width, 0, Math.PI * 2);
+            ctx.stroke();
+        }
     }
 
     flap() {
@@ -447,10 +455,22 @@ class Player extends Sprite {
     deactivatePowerUp() {
         if (this.activePowerUpType === "rapid_fire") {
             this.fireCooldown = this.originalFireCooldown;
+        } else if (this.activePowerUpType === "shield") {
+            this.isInvincible = false;
         }
         this.activePowerUpType = null;
         this.powerUpEndTime = 0;
         this.game.activePowerUpHudInfo = null;
+    }
+
+    activateShield() {
+        if (this.activePowerUpType) {
+            this.deactivatePowerUp();
+        }
+        this.activePowerUpType = "shield";
+        this.powerUpEndTime = Date.now() + 10000;
+        this.isInvincible = true;
+        this.game.activePowerUpHudInfo = { name: "Shield", endTime: this.powerUpEndTime };
     }
 
     loseLife() {
@@ -504,7 +524,8 @@ class Enemy extends Sprite {
             this.kill();
             this.game.score += 10;
             if (Math.random() < 0.15) {
-                const powerUp = new PowerUp(this.game, this.x + this.width / 2, this.y + this.height / 2, "rapid_fire");
+                const powerUpType = Math.random() < 0.5 ? "rapid_fire" : "shield";
+                const powerUp = new PowerUp(this.game, this.x + this.width / 2, this.y + this.height / 2, powerUpType);
                 this.game.allSprites.push(powerUp);
                 this.game.powerUps.push(powerUp);
             }
@@ -728,18 +749,30 @@ class PowerUp extends Sprite {
     }
 
     draw(ctx) {
-        ctx.fillStyle = BLUE;
-        ctx.fillRect(this.x, this.y, this.width, this.height);
-        ctx.fillStyle = WHITE;
-        ctx.font = "20px sans-serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("R", this.x + this.width / 2, this.y + this.height / 2);
+        if (this.type === "rapid_fire") {
+            ctx.fillStyle = BLUE;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+            ctx.fillStyle = WHITE;
+            ctx.font = "20px sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("R", this.x + this.width / 2, this.y + this.height / 2);
+        } else if (this.type === "shield") {
+            ctx.fillStyle = CYAN;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+            ctx.fillStyle = WHITE;
+            ctx.font = "20px sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("S", this.x + this.width / 2, this.y + this.height / 2);
+        }
     }
 
     applyEffect() {
         if (this.type === "rapid_fire") {
             this.game.player.activateRapidFire();
+        } else if (this.type === "shield") {
+            this.game.player.activateShield();
         }
         this.kill();
     }
