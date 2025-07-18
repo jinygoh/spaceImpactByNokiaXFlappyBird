@@ -284,6 +284,8 @@ class Game {
             this.stars.forEach(star => star.draw(this.ctx));
             this.drawText("Flappy Impact", "72px sans-serif", YELLOW, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 3, true);
             this.drawText("Press Enter to Start", "36px sans-serif", WHITE, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, true);
+            this.drawText("Press SPACE to Flap", "24px sans-serif", WHITE, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 50, true);
+            this.drawText("Press X to Shoot", "24px sans-serif", WHITE, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 80, true);
         } else if (this.gameState === LEVEL_TRANSITION) {
             this.stars.forEach(star => star.draw(this.ctx));
             this.drawText(`LEVEL ${this.currentLevelIndex + 1}`, "72px sans-serif", WHITE, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, true);
