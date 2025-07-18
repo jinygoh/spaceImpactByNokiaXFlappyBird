@@ -371,8 +371,8 @@ class Player extends Sprite {
         this.x = 50;
         this.y = SCREEN_HEIGHT / 2;
         this.velocityY = 0;
-        this.gravity = 0.3;
-        this.flapStrength = -8;
+        this.gravity = 0.2;
+        this.flapStrength = -6;
         this.fireCooldown = 300;
         this.lastShotTime = 0;
         this.lastHitTime = 0;
@@ -796,6 +796,29 @@ class PowerUp extends Sprite {
 window.addEventListener("load", () => {
     const canvas = document.getElementById("gameCanvas");
     const game = new Game(canvas);
+
+    function resizeCanvas() {
+        const aspectRatio = SCREEN_WIDTH / SCREEN_HEIGHT;
+        const newWidth = window.innerWidth;
+        const newHeight = window.innerHeight;
+        const newAspectRatio = newWidth / newHeight;
+        let finalWidth, finalHeight;
+
+        if (newAspectRatio > aspectRatio) {
+            finalHeight = newHeight;
+            finalWidth = finalHeight * aspectRatio;
+        } else {
+            finalWidth = newWidth;
+            finalHeight = finalWidth / aspectRatio;
+        }
+
+        canvas.style.width = `${finalWidth}px`;
+        canvas.style.height = `${finalHeight}px`;
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
     game.run();
 
     window.addEventListener("keydown", e => {
