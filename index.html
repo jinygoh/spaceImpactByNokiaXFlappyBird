@@ -1,15 +1,37 @@
+<!--
+This is the main HTML file for the Flappy Impact game.
+It sets up the basic structure of the web page.
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Meta tags for character set and viewport -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- The title of the web page -->
     <title>Flappy Impact</title>
+
+    <!-- Link to the external CSS file for styling -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!--
+    The main container for the game.
+    This div holds the canvas element where the game is rendered.
+    -->
     <div id="game-container">
+        <!--
+        The canvas element where the game will be drawn.
+        The width and height are set to the game's resolution.
+        -->
         <canvas id="gameCanvas" width="800" height="600"></canvas>
     </div>
+
+    <!--
+    The script tag includes the main JavaScript file for the game logic.
+    It's placed at the end of the body to ensure the HTML is loaded before the script runs.
+    -->
     <script src="script.js"></script>
 </body>
 </html>
